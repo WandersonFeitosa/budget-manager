@@ -50,9 +50,9 @@ jobs:
           VM_HOST: ${{ secrets.VM_HOST }}
           VM_USER: ${{ secrets.VM_USER }}
           SSL_PATH: ${{ secrets.VM_DEPLOY_PATH }}/src/ssl
-          SSL_KEY: ${{ secrets.SSL_KEY }}
-          SSL_CERT: ${{ secrets.SSL_CERT }}
-          SSL_CA: ${{ secrets.SSL_CA }}
+          SSL_KEY_FILE: ${{ secrets.SSL_KEY_FILE }}
+          SSL_CERT_FILE: ${{ secrets.SSL_CERT_FILE }}
+          SSL_CA_FILE: ${{ secrets.SSL_CA_FILE }}
         run: |
           ssh $VM_USER@$VM_HOST << EOF
 
@@ -60,15 +60,15 @@ jobs:
             cd $SSL_PATH
 
             cat << EOT > private.key
-            $SSL_KEY
+            $SSL_KEY_FILE
             EOF
 
             cat << EOT > $SSL_PATH/certificate.crt
-            $SSL_CERT
+            $SSL_CERT_FILE
             EOF
 
             cat << EOT > $SSL_PATH/ca_bundle.crt
-            $SSL_CA
+            $SSL_CA_FILE
             EOF
           EOF
 
