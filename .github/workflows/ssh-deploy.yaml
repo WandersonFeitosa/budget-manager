@@ -1,0 +1,86 @@
+name: Deploy to VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.VM_KNOWN_HOSTS }}
+          if_key_exists: replace
+
+      - name: Deploy to VM
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_DEPLOY_PATH: ${{ secrets.VM_DEPLOY_PATH }}
+        run: |
+          # Copy files to VM
+          scp -r ./* $VM_USER@$VM_HOST:$VM_DEPLOY_PATH
+
+          # Generate .env file
+          ssh $VM_USER@$VM_HOST << EOF
+            mkdir -p $VM_DEPLOY_PATH
+            cd $VM_DEPLOY_PATH
+            
+            # Generate .env file
+            cat << EOT > .env
+            REDIS_HOST=${{ secrets.REDIS_HOST }}
+            REDIS_PORT=${{ secrets.REDIS_PORT }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+            REDIS_USERNAME=${{ secrets.REDIS_USERNAME }}
+            RUN_CRON=${{ secrets.RUN_CRON }}
+            SSL_KEY=${{ secrets.SSL_KEY }}
+            SSL_CERT=${{ secrets.SSL_CERT }}
+            SSL_CA=${{ secrets.SSL_CA }}
+          EOF
+
+      - name: Copy ssl files
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          SSL_PATH: ${{ secrets.VM_DEPLOY_PATH }}/src/ssl
+          SSL_KEY: ${{ secrets.SSL_KEY }}
+          SSL_CERT: ${{ secrets.SSL_CERT }}
+          SSL_CA: ${{ secrets.SSL_CA }}
+        run: |
+          ssh $VM_USER@$VM_HOST << EOF
+
+            mkdir -p $SSL_PATH
+            cd $SSL_PATH
+
+            cat << EOT > private.key
+            $SSL_KEY
+            EOF
+
+            cat << EOT > $SSL_PATH/certificate.crt
+            $SSL_CERT
+            EOF
+
+            cat << EOT > $SSL_PATH/ca_bundle.crt
+            $SSL_CA
+            EOF
+          EOF
+
+      - name: Start Docker Compose
+
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_DEPLOY_PATH: ${{ secrets.VM_DEPLOY_PATH }}
+        run: |
+          ssh $VM_USER@$VM_HOST << EOF
+
+            cd $VM_DEPLOY_PATH
+            sudo docker compose up -d --build
+          EOF

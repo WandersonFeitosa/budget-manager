@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id                      String  @id @default(uuid())
+  username                String  @unique
+  discordId               String  @unique @map("discord_id")
+  inQueue                 Boolean @default(false) @map("in_queue")
+  rankPoints              Int     @default(200) @map("rank_points")
+  matches                 Int     @default(0) @map("matches")
+  wins                    Int     @default(0) @map("wins")
+  winRate                 Float   @default(0) @map("win_rate")
+  reportsChannelId        String? @map("reports_channel_id")
+  openReportChannelId     String? @map("open_report_channel_id")
+  openReportUserDiscordId String? @map("open_report_user_discord_id")
+
+  create_at DateTime  @default(now())
+  update_at DateTime? @updatedAt
+
+  Groups  Groups? @relation(fields: [groupId], references: [id])
+  groupId Int?
+
+  Invites Invites[]
+
+  Teams  Teams? @relation(fields: [teamId], references: [id])
+  teamId Int?
+
+  @@index([discordId])
+  @@index([inQueue])
+  @@map("tb_users")
+}
+
+model Groups {
+  id              Int     @id @default(autoincrement())
+  leaderId        String  @map("leader_id")
+  voiceChannelId  String? @map("voice_channel_id")
+  textChannelId   String? @map("text_channel_id")
+  inviteChannelId String? @map("invite_channel_id")
+  categoryId      String? @map("category_id")
+
+  create_at DateTime  @default(now())
+  update_at DateTime? @updatedAt
+
+  Users   Users[]
+  Invites Invites[]
+
+  @@map("tb_groups")
+}
+
+model Invites {
+  id Int @id @default(autoincrement())
+
+  create_at DateTime  @default(now())
+  update_at DateTime? @updatedAt
+
+  Users   Users  @relation(fields: [userId], references: [id])
+  userId  String
+  Groups  Groups @relation(fields: [groupId], references: [id])
+  groupId Int
+
+  @@map("tb_invites")
+}
+
+model Instances {
+  id            Int     @id @default(autoincrement())
+  name          String  @unique
+  ip            String?
+  port          Int?
+  rconPassword  String? @map("rcon_password")
+  matchPassword String? @map("match_password")
+  ready         Boolean @default(false)
+  using         Boolean @default(false)
+
+  create_at DateTime  @default(now())
+  update_at DateTime? @updatedAt
+
+  Matches Matches?
+
+  @@index([ready])
+  @@map("tb_instances")
+}
+
+model Matches {
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  rank                  Int     @default(0)
+  commonCategoryId      String? @map("common_category_id")
+  commonVoiceChannelId  String? @map("common_voice_channel_id")
+  commonTextChannelId   String? @map("common_text_channel_id")
+  commonAcceptChannelId String? @map("common_accept_channel_id")
+  acceptMessageId       String? @map("accept_message_id")
+
+  amberCategoryId     String? @map("amber_category_id")
+  amberVoiceChannelId String? @map("amber_voice_channel_id")
+  amberTextChannelId  String? @map("amber_text_channel_id")
+
+  sapphireCategoryId     String? @map("sapphire_category_id")
+  sapphireVoiceChannelId String? @map("sapphire_voice_channel_id")
+  sapphireTextChannelId  String? @map("sapphire_text_channel_id")
+
+  winnerMessageId String? @unique @map("winner_message_id")
+
+  create_at DateTime  @default(now())
+  update_at DateTime? @updatedAt
+
+  Teams         Teams[]
+  MatchStatus   MatchStatus? @relation(fields: [matchStatusId], references: [id])
+  matchStatusId Int?
+  Instances     Instances?   @relation(fields: [instanceId], references: [id])
+  instanceId    Int?         @unique
+
+  @@index([winnerMessageId])
+  @@map("tb_matches")
+}
+
+model Teams {
+  id Int @id @default(autoincrement())
+
+  rank      Int       @default(0)
+  side      String    @default("none")
+  create_at DateTime  @default(now())
+  update_at DateTime? @updatedAt
+
+  Users   Users[]
+  Matches Matches? @relation(fields: [matchId], references: [id])
+  matchId Int?
+
+  @@index([matchId])
+  @@map("tb_teams")
+}
+
+model MatchStatus {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  create_at DateTime  @default(now())
+  update_at DateTime? @updatedAt
+
+  Matches Matches[]
+
+  @@map("tb_match_status")
+}
