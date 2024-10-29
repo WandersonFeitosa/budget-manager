@@ -46,14 +46,12 @@ jobs:
             SSL_CA=${{ secrets.SSL_CA }}
           EOF
 
-      - name: Copy ssl files
+      - name: Copy ssl key file
         env:
           VM_HOST: ${{ secrets.VM_HOST }}
           VM_USER: ${{ secrets.VM_USER }}
           SSL_PATH: ${{ secrets.VM_DEPLOY_PATH }}/src/ssl
           SSL_KEY_FILE: ${{ secrets.SSL_KEY_FILE }}
-          SSL_CERT_FILE: ${{ secrets.SSL_CERT_FILE }}
-          SSL_CA_FILE: ${{ secrets.SSL_CA_FILE }}
         run: |
           ssh $VM_USER@$VM_HOST << EOF
 
@@ -62,15 +60,35 @@ jobs:
 
             cat << EOT > private.key
             $SSL_KEY_FILE
-            EOF
 
-            cat << EOT > $SSL_PATH/certificate.crt
+          EOF
+
+      - name: Copy ssl certificate file
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          SSL_PATH: ${{ secrets.VM_DEPLOY_PATH }}/src/ssl
+          SSL_CERT_FILE: ${{ secrets.SSL_CERT_FILE }}
+        run: |
+          ssh $VM_USER@$VM_HOST << EOF
+
+            cd $SSL_PATH
+            cat << EOT > certificate.crt
             $SSL_CERT_FILE
-            EOF
+          EOF
 
-            cat << EOT > $SSL_PATH/ca_bundle.crt
+      - name: Copy ssl ca file
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          SSL_PATH: ${{ secrets.VM_DEPLOY_PATH }}/src/ssl
+          SSL_CA_FILE: ${{ secrets.SSL_CA_FILE }}
+        run: |
+          ssh $VM_USER@$VM_HOST << EOF
+
+            cd $SSL_PATH
+            cat << EOT > ca_bundle.crt
             $SSL_CA_FILE
-            EOF
           EOF
 
       - name: Start Docker Compose
