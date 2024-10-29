@@ -35,6 +35,7 @@ jobs:
             
             # Generate .env file
             cat << EOT > .env
+            PORT=${{ secrets.PORT }}
             REDIS_HOST=${{ secrets.REDIS_HOST }}
             REDIS_PORT=${{ secrets.REDIS_PORT }}
             REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
