@@ -1,5 +1,5 @@
 services:
-  lee:
+  costs:
     build:
       context: .
       dockerfile: Dockerfile
