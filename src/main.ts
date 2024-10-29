@@ -6,14 +6,14 @@ import { LoggerService } from './modules/logger/logger.service';
 import * as fs from 'fs';
 
 async function bootstrap() {
-  // const httpsOptions = {
-  //   key: fs.readFileSync(process.env.SSL_KEY),
-  //   cert: fs.readFileSync(process.env.SSL_CERT),
-  //   ca: fs.readFileSync(process.env.SSL_CA),
-  // };
+  const httpsOptions = {
+    key: fs.readFileSync(process.env.SSL_KEY),
+    cert: fs.readFileSync(process.env.SSL_CERT),
+    ca: fs.readFileSync(process.env.SSL_CA),
+  };
 
   const app = await NestFactory.create(AppModule, {
-    // httpsOptions,
+    httpsOptions,
     cors: true,
   });
 
