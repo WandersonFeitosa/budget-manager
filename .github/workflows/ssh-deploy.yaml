@@ -12,6 +12,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Create SSL files
+        run: |
+          mkdir -p src/ssl
+          echo "${{ secrets.SSL_KEY_FILE }}" > src/ssl/private.key
+          echo "${{ secrets.SSL_CERT_FILE }}" > src/ssl/certificate.crt
+          echo "${{ secrets.SSL_CA_FILE }}" > src/ssl/ca_bundle.crt
+
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
@@ -46,60 +53,13 @@ jobs:
             SSL_CA=${{ secrets.SSL_CA }}
           EOF
 
-      - name: Copy ssl key file
-        env:
-          VM_HOST: ${{ secrets.VM_HOST }}
-          VM_USER: ${{ secrets.VM_USER }}
-          SSL_PATH: ${{ secrets.VM_DEPLOY_PATH }}/src/ssl
-          SSL_KEY_FILE: ${{ secrets.SSL_KEY_FILE }}
-        run: |
-          ssh $VM_USER@$VM_HOST << EOF
-
-            mkdir -p $SSL_PATH
-            cd $SSL_PATH
-
-            cat << EOT > private.key
-            $SSL_KEY_FILE
-
-          EOF
-
-      - name: Copy ssl certificate file
-        env:
-          VM_HOST: ${{ secrets.VM_HOST }}
-          VM_USER: ${{ secrets.VM_USER }}
-          SSL_PATH: ${{ secrets.VM_DEPLOY_PATH }}/src/ssl
-          SSL_CERT_FILE: ${{ secrets.SSL_CERT_FILE }}
-        run: |
-          ssh $VM_USER@$VM_HOST << EOF
-
-            cd $SSL_PATH
-            cat << EOT > certificate.crt
-            $SSL_CERT_FILE
-          EOF
-
-      - name: Copy ssl ca file
-        env:
-          VM_HOST: ${{ secrets.VM_HOST }}
-          VM_USER: ${{ secrets.VM_USER }}
-          SSL_PATH: ${{ secrets.VM_DEPLOY_PATH }}/src/ssl
-          SSL_CA_FILE: ${{ secrets.SSL_CA_FILE }}
-        run: |
-          ssh $VM_USER@$VM_HOST << EOF
-
-            cd $SSL_PATH
-            cat << EOT > ca_bundle.crt
-            $SSL_CA_FILE
-          EOF
-
       - name: Start Docker Compose
-
         env:
           VM_HOST: ${{ secrets.VM_HOST }}
           VM_USER: ${{ secrets.VM_USER }}
           VM_DEPLOY_PATH: ${{ secrets.VM_DEPLOY_PATH }}
         run: |
           ssh $VM_USER@$VM_HOST << EOF
-
             cd $VM_DEPLOY_PATH
             sudo docker compose up -d --build
           EOF

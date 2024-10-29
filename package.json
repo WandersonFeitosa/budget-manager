@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": " prisma generate && nest build",
+    "build": "prisma generate && nest build && npm run copy-ssl",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -18,7 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seeds": "ts-node prisma/seeds.ts"
+    "seeds": "ts-node prisma/seeds.ts",
+    "copy-ssl": "copyfiles -u 1 src/ssl/* dist/src/ssl/"
   },
   "dependencies": {
     "@google-cloud/pubsub": "^4.7.2",
@@ -37,6 +38,7 @@
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "copyfiles": "^2.4.1",
     "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
     "prisma": "^5.20.0",
